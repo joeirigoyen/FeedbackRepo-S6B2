@@ -1,4 +1,4 @@
-# FeedbackRepo-S6B2
+# FeedbackRepo-S7B2
 Deep learning activities portfolio.
 
 # How to run
