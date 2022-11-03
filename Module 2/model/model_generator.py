@@ -1,3 +1,6 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import tensorflow as tf
 import numpy as np
 import keras.utils
 import keras.models
@@ -11,6 +14,8 @@ from tensorflow import nn, expand_dims
 from keras import Sequential, layers, callbacks
 from keras.losses import SparseCategoricalCrossentropy
 
+tf.get_logger().setLevel('ERROR')
+tf.autograph.set_verbosity(3)
 
 SAVED_MODEL_PATH = Path.cwd().joinpath('saved')
 SAVED_PLOTS_PATH = Path.cwd().joinpath('plots')
@@ -91,9 +96,9 @@ def get_datasets(data_path: str | Path, validation_split: float = 0.2, image_siz
 def get_augmentation_layer(image_size: tuple):
     return Sequential([
         layers.RandomFlip("horizontal", input_shape=(image_size[0], image_size[1], 3)),
-        layers.RandomRotation(0.125),
-        layers.RandomBrightness(0.15),
-        layers.RandomContrast(0.15)
+        layers.RandomRotation(0.1),
+        layers.RandomBrightness(0.125),
+        layers.RandomContrast(0.1)
     ])
 
 
@@ -101,24 +106,25 @@ def get_model(num_classes: int, image_height: int, image_width: int, batch_size:
     model = Sequential([
         get_augmentation_layer((image_height, image_width)),
         layers.Rescaling(1. / 255, input_shape=(image_height, image_width, 3)),
+        layers.Conv2D(8, 3, padding='same', activation='relu'),
+        layers.Conv2D(8, 3, padding='same', activation='relu'),
+        layers.MaxPooling2D(strides=2, padding='same'),
         layers.Conv2D(16, 3, padding='same', activation='relu'),
         layers.Conv2D(16, 3, padding='same', activation='relu'),
         layers.MaxPooling2D(strides=2, padding='same'),
         layers.Conv2D(32, 3, padding='same', activation='relu'),
         layers.Conv2D(32, 3, padding='same', activation='relu'),
+        layers.Conv2D(32, 3, padding='same', activation='relu'),
         layers.MaxPooling2D(strides=2, padding='same'),
         layers.Conv2D(64, 3, padding='same', activation='relu'),
         layers.Conv2D(64, 3, padding='same', activation='relu'),
         layers.Conv2D(64, 3, padding='same', activation='relu'),
         layers.MaxPooling2D(strides=2, padding='same'),
-        layers.Conv2D(128, 3, padding='same', activation='relu'),
-        layers.Conv2D(128, 3, padding='same', activation='relu'),
-        layers.Conv2D(128, 3, padding='same', activation='relu'),
-        layers.MaxPooling2D(strides=2, padding='same'),
-        layers.Dropout(0.25),
+        layers.Dropout(0.2),
         layers.Flatten(),
         layers.Dense(128, activation='relu'),
         layers.Dense(64, activation='relu'),
+        layers.Dense(32, activation='relu'),
         layers.Dense(num_classes)
     ])
     model.compile(optimizer='adam',
@@ -132,7 +138,6 @@ def fit_model(model: keras.models.Model, training_data: keras.utils.image_datase
                         validation_data=validation_data,
                         epochs=epochs)
     model.save(SAVED_MODEL_PATH.joinpath('my_model.h5'))
-    print(type(history))
     return history
 
 
