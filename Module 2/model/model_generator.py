@@ -30,8 +30,8 @@ def convert_to_path(path_to_convert: str | Path):
 
 
 # Load model from saved_models path
-def get_saved_model(filename: str):
-    return load_model(SAVED_MODEL_PATH.joinpath(filename))
+def get_saved_model(filename: Path):
+    return load_model(filename)
 
 
 # Extract accuracy and loss values from a model's history object, plot it and save the image
